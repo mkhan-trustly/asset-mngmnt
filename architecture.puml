@@ -1,0 +1,38 @@
+@startuml
+skinparam linetype ortho
+
+actor User
+participant "REST API (Write)" as WriteAPI
+participant "Command Gateway" as CommandGateway
+participant "Axon Command Bus" as CommandBus
+entity "AssetAggregate (Event Sourced)" as Aggregate
+participant "Event Store" as EventStore
+participant "Event Bus (Mocked)" as EventBus
+participant "Projection (Read Side)" as Projection
+participant "Read Model Repository" as ReadRepo
+participant "REST API (Read)" as ReadAPI
+participant "Audit Log" as AuditTrail
+
+User -> WriteAPI: Send RegisterAssetCommand
+WriteAPI -> CommandGateway: Dispatch command
+CommandGateway -> CommandBus: Route command
+CommandBus -> Aggregate: Handle command
+
+note right of Aggregate: Validate business rules
+Aggregate -> Aggregate: Apply AssetRegisteredEvent
+Aggregate -> EventStore: Store event (Event Sourcing)
+Aggregate -> EventBus: Publish event
+
+note right of EventBus: Asynchronously handled
+EventBus -> Projection: Handle event (Update read model)
+EventBus -> AuditTrail: Log event data
+Projection -> ReadRepo: Update read model
+
+User -> ReadAPI: Fetch property details
+ReadAPI -> ReadRepo: Query read model
+ReadRepo -> ReadAPI: Return asset data
+
+User -> WriteAPI: Fetch audit logs
+WriteAPI -> AuditTrail: Get audit logs
+AuditTrail -> WriteAPI: Return audit data
+@enduml
