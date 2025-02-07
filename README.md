@@ -8,8 +8,15 @@ To use swagger, http://localhost:8080/swagger-ui/index.html
 ### Domain
 To keep it simple imagine we are managing an asset, there might be several properties but let's just
 update the name for simplicity. 
-* AssetId UUID
-* Asset name String
+- AssetId UUID
+- Asset name String
+
+### Microservices
+In the demo application we have created two main packages
+- command
+- query
+
+In the real world, these will be two different microservices.
 
 ### Flow
 Created using PlantUML (see architecture.puml)
@@ -101,3 +108,11 @@ A repository for events, which represent the changes that occurred in aggregates
 - Write Availability: The system remains available to handle write operations (e.g., creating or updating events), even if the read model or projections aren’t immediately updated.
 - Read Availability: The system can serve queries even when they may not reflect the latest writes (since the read model may not be fully synchronized).
 - Consistency: The system isn’t always in a consistent state at a given time. Instead, consistency is eventually achieved after the event store is processed and projections are updated.
+
+### FAQs
+- Does Axon store the current state? No, this is not the way Event sourcing works. When an aggregate is loaded, Axon fetches all events related to that aggregate from the Event Store and then reapplied sequentially to reconstruct the latest state.
+- What is a snapshot in Axon? To optimise replaying all events Axon supports snapshots, which store the latest known state of an aggregate at a specific point.
+- Is it correct to say that projections (READ) are mutable? Yes, projections are mutable because they need to apply updates incrementally rather than replacing the entire dataset. Events only represent changes, not full state.
+- Is it not a double job for READ (part) to also do the WRITE (store the projection)? Yes indeed but it offers better scalability, separation of concerns and optimized reads.
+- Does Axon provide Retry mechanism on event lost? It should provide, #TODO: Figure this out.
+- To fetch the historical data we need to eventually fetch it from the WRITE (part), does it mean that will also need to function as READ? Yes indeed, READ model is optimized for queries (fast, denormalized) and special functionality will require WRITE to also function as READ.
