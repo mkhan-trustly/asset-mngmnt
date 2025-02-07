@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/audit")
+@RequestMapping("api/v1/audit")
 class AuditController {
 
     @GetMapping("/{assetId}")
